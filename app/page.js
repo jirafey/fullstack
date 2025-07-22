@@ -12,7 +12,7 @@ export default function Home() {
     const fetchCount = async () => {
       try {
         console.log("Fetching count from /api/route...");
-        const response = await fetch('/api/route');
+        const response = await fetch('/api/counter');
         console.log("Fetch response:", response); // Log the response object
 
         if (!response.ok) {
@@ -45,7 +45,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/route', {
+      const response = await fetch('/api/counter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
