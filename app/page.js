@@ -1,95 +1,102 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+// app/page.js
+'use client';
+
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        console.log("Fetching count from /api/route...");
+        const response = await fetch('/api/route');
+        console.log("Fetch response:", response); // Log the response object
+
+        if (!response.ok) {
+          // If response is not OK, try to get more info from the body
+          const errorText = await response.text(); // Get response body as text
+          console.error("API Error Response:", errorText);
+          throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText.substring(0, 100)}...`);
+        }
+
+        const data = await response.json();
+        console.log("Received data:", data); // Log the parsed JSON data
+
+        if (data && typeof data.count === 'number') {
+          setCount(data.count);
+        } else {
+          throw new Error("Invalid data format received from API.");
+        }
+      } catch (e) {
+        setError(e.message);
+        console.error("Failed to fetch count:", e); // This is the original error console.
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCount();
+  }, []); // Empty dependency array means this runs once on mount
+
+  // ... (rest of your component for buttons) ...
+  const updateCount = async (action) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action }),
+      });
+      console.log("Update response:", response);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Update Error Response:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText.substring(0, 100)}...`);
+      }
+      const data = await response.json();
+      console.log("Received update data:", data);
+      setCount(data.count);
+    } catch (e) {
+      setError(e.message);
+      console.error("Failed to update count:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center', marginTop: '50px', fontFamily: 'sans-serif' }}>
+      <h1>Simple Full-Stack Counter</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      ) : (
+        <h2>Current Count: {count}</h2>
+      )}
+
+      <div style={{ marginTop: '20px' }}>
+        <button
+          onClick={() => updateCount('increment')}
+          disabled={loading || !!error}
+          style={{ marginRight: '10px', padding: '10px 20px', cursor: 'pointer', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px' }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Increment
+        </button>
+        <button
+          onClick={() => updateCount('decrement')}
+          disabled={loading || !!error}
+          style={{ padding: '10px 20px', cursor: 'pointer', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px' }}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          Decrement
+        </button>
+      </div>
     </div>
   );
 }
